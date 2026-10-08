@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EVA – Karten sortieren</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700&display=swap">
+<style>
+:root{--bg:#EEF2F7;--card:#fff;--ink:#14213D;--mut:#53607A;--line:#C9D3E3;--e:#2F6BDB;--v:#E0A100;--a:#14946F;--et:#E4ECFB;--vt:#FBF1D2;--at:#DDF2EA;--ok:#1B7F4B;--bad:#C23B3B;--sel:#14213D;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1626;--card:#223052;--ink:#E8EDF7;--mut:#A3B0C8;--line:#3A4A70;--e:#6C9BFF;--v:#F0BE3A;--a:#3CC9A0;--et:#1A2848;--vt:#3A3318;--at:#143B33;--ok:#55D08E;--bad:#FF8585;--sel:#E8EDF7}}
+:root[data-theme="dark"]{--bg:#0F1626;--card:#223052;--ink:#E8EDF7;--mut:#A3B0C8;--line:#3A4A70;--e:#6C9BFF;--v:#F0BE3A;--a:#3CC9A0;--et:#1A2848;--vt:#3A3318;--at:#143B33;--ok:#55D08E;--bad:#FF8585;--sel:#E8EDF7}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Lexend","Segoe UI",Verdana,sans-serif;line-height:1.5}
+main{max-width:1000px;margin:0 auto;padding:18px 14px 50px}
+h1{font-size:clamp(1.5rem,4.5vw,2.1rem);margin:6px 0 6px;line-height:1.15}
+.lead{color:var(--mut);margin:0 0 14px;max-width:70ch}
+button:focus-visible,select:focus-visible,.zone:focus-visible{outline:3px solid var(--sel);outline-offset:2px}
+.board{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:6px;align-items:stretch}
+.ar{display:flex;align-items:center;font-size:1.8rem;color:var(--mut)}
+.fld{border-radius:16px;overflow:hidden;background:var(--card);display:flex;flex-direction:column;border:2px solid var(--line)}
+.fld[data-f=E]{--c:var(--e);--t:var(--et)}.fld[data-f=V]{--c:var(--v);--t:var(--vt)}.fld[data-f=A]{--c:var(--a);--t:var(--at)}
+.fh{padding:10px;background:var(--c)}
+.fh select{width:100%;font:inherit;font-weight:700;padding:8px;border-radius:8px;border:2px solid transparent;background:var(--card);color:var(--ink)}
+.fh select.ok{border-color:var(--ok)}.fh select.bad{border-color:var(--bad)}
+.zone{flex:1;min-height:210px;padding:10px;background:var(--t);display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start}
+.zone.over{outline:3px dashed var(--c);outline-offset:-6px}
+.zone:empty::before,.pool:empty::before{content:"Karten hier ablegen";color:var(--mut);font-size:.9rem;align-self:center;margin:auto}
+.tile{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;width:104px;padding:8px 6px;font:inherit;font-size:.82rem;text-align:center;background:var(--card);color:var(--ink);border:2px solid var(--line);border-radius:12px;cursor:grab}
+.tile .ic{font-size:2rem;line-height:1.1}
+.tile.sel{border-color:var(--sel);box-shadow:0 0 0 3px var(--sel)}
+.tile.ok{border-color:var(--ok)}.tile.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,var(--card))}
+.verb{flex-direction:row;width:auto;padding:6px 14px;border-radius:20px;font-size:.9rem}
+.sec{margin-top:18px}
+.sec h2{font-size:1.05rem;margin:0 0 6px}
+.pool{display:flex;flex-wrap:wrap;gap:8px;padding:12px;min-height:80px;background:var(--card);border:2px dashed var(--line);border-radius:14px}
+.pool.over{border-color:var(--sel)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.btn{font:inherit;font-weight:600;padding:9px 18px;border:0;border-radius:10px;background:var(--sel);color:var(--bg);cursor:pointer}
+.btn.gh{background:transparent;color:var(--ink);border:2px solid var(--line)}
+.fb{margin:12px 0 0;font-weight:600;min-height:1.5em}
+.fb.good{color:var(--ok)}.fb.no{color:var(--bad)}
+.win{margin-top:12px;padding:14px 16px;border-radius:12px;background:var(--a);color:#fff;font-weight:600}
+.win[hidden]{display:none}
+@media(max-width:760px){.board{grid-template-columns:1fr}.ar{justify-content:center;transform:rotate(90deg);height:34px}.zone{min-height:130px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+<h1>Karten sortieren: Finde die Ordnung</h1>
+<p class="lead">Ordne die Karten den drei Feldern zu. Die Felder sind schon in der richtigen Reihenfolge angeordnet: Lies sie von links nach rechts wie eine Geschichte. Finde danach die Überschriften der Felder selbst heraus. Ziehe die Karten oder tippe erst eine Karte an und dann das Feld.</p>
+<div class="board" id="board"></div>
+<div class="sec"><h2>Geräte</h2><div class="pool zone" id="pool" data-f="p" tabindex="0" aria-label="Ablage für Geräte"></div></div>
+<div class="sec" id="vs"><button class="btn gh" id="vt" type="button" aria-expanded="false">Hilfe: Verben einblenden</button><div class="pool zone" id="vpool" data-f="p" tabindex="0" aria-label="Ablage für Verben" hidden style="margin-top:8px"></div></div>
+<div class="bar"><button class="btn" id="chk" type="button">Prüfen</button><button class="btn gh" id="rst" type="button">Neu starten</button></div>
+<p class="fb" id="fb" aria-live="polite"></p>
+<div class="win" id="win" hidden>Geschafft! Eingabe: Daten gelangen in den Computer. Verarbeitung: Der Computer verändert sie. Ausgabe: Das Ergebnis wird für uns sichtbar oder hörbar.</div>
+</main>
+<script>
+const D=[["tast","⌨️","Tastatur","E"],["maus","🖱️","Maus","E"],["mik","🎤","Mikrofon","E"],["cam","📷","Webcam","E"],["joy","🕹️","Joystick","E"],["cpu","🧠","Prozessor (CPU)","V"],["prog","⚙️","Programm (Software)","V"],["mon","🖥️","Monitor","A"],["lau","🔊","Lautsprecher","A"],["dru","🖨️","Drucker","A"],["bea","📽️","Beamer","A"],["kop","🎧","Kopfhörer","A"]];
+const VB=[["eingeben","E"],["aufnehmen","E"],["erfassen","E"],["eintippen","E"],["einlesen","E"],["berechnen","V"],["sortieren","V"],["umwandeln","V"],["vergleichen","V"],["auswerten","V"],["anzeigen","A"],["abspielen","A"],["drucken","A"],["darstellen","A"],["ausgeben","A"]];
+const HEAD=["Eingabe","Verarbeitung","Ausgabe"],OPT=["Eingabe","Verarbeitung","Ausgabe","Speicherung","Übertragung"],FL=["E","V","A"];
+let cards,heads,sel,res,showV;
+const $=s=>document.querySelector(s);
+function init(){cards=[...D.map(d=>({id:d[0],ic:d[1],l:d[2],h:d[3],loc:"p"})),...VB.map((v,n)=>({id:"v"+n,l:v[0],h:v[1],verb:1,loc:"p"}))];heads={E:"",V:"",A:""};sel=null;res=null;$("#fb").textContent="";$("#win").hidden=true;draw()}
+function place(id,loc){const c=cards.find(x=>x.id==id);if(!c)return;if(c.copy&&loc=="p"){cards=cards.filter(x=>x!==c)}else c.loc=loc;sel=null;res=null;$("#fb").textContent="";draw()}
+function tile(c){const b=document.createElement("button");b.type="button";b.draggable=true;b.className="tile"+(c.verb?" verb":"")+(sel==c.id?" sel":"");
+ if(res&&res.cards.has(c.id))b.classList.add(res.cards.get(c.id)?"ok":"bad");
+ b.innerHTML=(c.ic?"<span class='ic'>"+c.ic+"</span>":"")+"<span>"+c.l+"</span>";
+ b.ondragstart=e=>{e.dataTransfer.setData("text/plain",c.id);e.dataTransfer.effectAllowed="move"};
+ b.onclick=e=>{e.stopPropagation();if(sel&&sel!=c.id){place(sel,c.loc);return}sel=sel==c.id?null:c.id;draw()};
+ return b}
+function zone(z){z.ondragover=e=>{e.preventDefault();z.classList.add("over")};z.ondragleave=()=>z.classList.remove("over");
+ z.ondrop=e=>{e.preventDefault();z.classList.remove("over");place(e.dataTransfer.getData("text/plain"),z.dataset.f)};
+ z.onclick=()=>{if(sel)place(sel,z.dataset.f)};z.onkeydown=e=>{if(e.target===z&&(e.key=="Enter"||e.key==" ")&&sel){e.preventDefault();place(sel,z.dataset.f)}}}
+function draw(){const bd=$("#board");bd.innerHTML="";
+ FL.forEach((f,i)=>{const w=document.createElement("div");w.className="fld";w.dataset.f=f;
+  const h=document.createElement("div");h.className="fh";const s=document.createElement("select");s.setAttribute("aria-label","Überschrift von Feld "+(i+1));
+  s.innerHTML="<option value=''>Überschrift wählen …</option>"+OPT.map(o=>"<option"+(heads[f]==o?" selected":"")+">"+o+"</option>").join("");
+  if(res&&heads[f])s.classList.add(heads[f]==HEAD[i]?"ok":"bad");
+  s.onchange=()=>{heads[f]=s.value;res=null;$("#fb").textContent="";draw()};h.append(s);
+  const z=document.createElement("div");z.className="zone";z.dataset.f=f;z.tabIndex=0;z.setAttribute("aria-label","Feld "+(i+1));zone(z);
+  cards.filter(c=>c.loc==f).forEach(c=>z.append(tile(c)));w.append(h,z);bd.append(w);if(i<2){const a=document.createElement("div");a.className="ar";a.setAttribute("aria-hidden","true");a.textContent="➜";bd.append(a)}});
+ const p=$("#pool"),vp=$("#vpool");p.innerHTML="";vp.innerHTML="";zone(p);zone(vp);
+ cards.filter(c=>c.loc=="p"&&!c.verb).forEach(c=>p.append(tile(c)));cards.filter(c=>c.loc=="p"&&c.verb).forEach(c=>vp.append(tile(c)));vp.hidden=!showV;
+ $("#vt").textContent=showV?"Hilfe: Verben ausblenden":"Hilfe: Verben einblenden";$("#vt").setAttribute("aria-expanded",showV)}
+$("#vt").onclick=()=>{showV=!showV;draw()};
+$("#rst").onclick=()=>{showV=false;init()};
+$("#chk").onclick=()=>{const m=new Map();let w=0,pl=0;cards.forEach(c=>{if(c.loc!="p"){const ok=c.h.includes(c.loc);m.set(c.id,ok);if(!ok)w++;pl++}});
+ res={cards:m};const unp=cards.filter(c=>!c.verb&&c.loc=="p").length;
+ const hd=FL.filter((f,i)=>heads[f]==HEAD[i]).length;
+ const f=$("#fb");let t="",good=false;
+ if(w)t=w+" Karte"+(w>1?"n liegen":" liegt")+" im falschen Feld (rot). Lies die Felder von links nach rechts: Was passiert zuerst, was danach, was am Ende?";
+ else if(unp)t="Bisher stimmt alles. Es liegen noch "+unp+" Gerät"+(unp>1?"e":"")+" unten.";
+ else if(hd<3)t="Die Karten stimmen alle. Finde jetzt die passenden Überschriften ("+hd+" von 3 richtig).";
+ else{t="Alles richtig!";good=true}
+ f.textContent=t;f.className="fb "+(good?"good":"no");$("#win").hidden=!good;draw()};
+showV=false;init();
+</script>
+</body>
+</html>
